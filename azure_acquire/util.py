@@ -359,6 +359,7 @@ def start_recording_RT(
     save_ir=True,
     display_frames=True,
     display_time=True,
+    sync_mode="master",
 ):
     """
     start recording data on Kinect Azure.
@@ -369,6 +370,7 @@ def start_recording_RT(
         session_name (str): session name of the recording
         recording_length (int): recording time in seconds.
         device_id (int, optional): camera id number if there are multiple cameras. Defaults to 0.
+        sync_mode (str, optional): sync mode for external trigger. Defaults to 'master'.
     """
     filename_prefix = os.path.join(
         base_dir, "session_" + datetime.now().strftime("%Y%m%d%H%M%S")
@@ -387,12 +389,25 @@ def start_recording_RT(
         # assume there is only one device when there is no serial number input
         device_id = 0
 
+    # get sync mode
+    sync_dict = {
+        "standalone": WiredSyncMode.STANDALONE,
+        "subordinate": WiredSyncMode.SUBORDINATE,
+    }
+
+    if sync_mode not in sync_dict:
+        raise ValueError(
+            "Invalid sync mode. Choose between 'standalone' and 'subordinate'."
+        )
+
+    wired_sync_mode = sync_dict[sync_mode]
+
     k4a_bottom = PyK4A(
         Config(
             color_resolution=ColorResolution.OFF,
             depth_mode=DepthMode.NFOV_UNBINNED,
             synchronized_images_only=False,
-            # wired_sync_mode=WiredSyncMode.MASTER
+            wired_sync_mode=wired_sync_mode,
         ),
         device_id=device_id,
     )
